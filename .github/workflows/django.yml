@@ -1,0 +1,41 @@
+name: Django CI (Pruebas Automatizadas)
+
+# 1. Definimos los eventos que dispararán el flujo
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    # 2. Especificamos el sistema operativo del servidor de GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+    # Paso A: Descargar el código del repositorio
+    - name: Descargar codigo
+      uses: actions/checkout@v4
+
+    # Paso B: Configurar el entorno de Python 3.10
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # Paso C: Instalar las dependencias de Django
+    - name: Instalar Dependencias
+      run: |
+        python -m pip install --upgrade pip
+        pip install django
+
+    # Paso D: Aplicar las migraciones de la base de datos en el servidor
+    - name: Preparar Base de Datos
+      run: |
+        python manage.py migrate
+
+    # Paso E: Ejecutar las pruebas de integración autónomas
+    - name: Correr Pruebas de Integracion
+      run: |
+        # Ejecutamos las pruebas usando el test runner de Django
+        python manage.py test
