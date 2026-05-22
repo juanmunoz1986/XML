@@ -26,8 +26,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-xbqr*^5%z3s6zn02$47#d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-# En producción, ALLOWED_HOSTS leerá una lista separada por comas (por ejemplo: "mi-app.render.com,localhost")
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver').split(',')
+# En producción, ALLOWED_HOSTS leerá una lista separada por comas. Añadimos .onrender.com por defecto para compatibilidad directa.
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver,.onrender.com').split(',')
+
+# Agregar dinámicamente el host externo que nos asigna Render
+render_external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if render_external_hostname:
+    ALLOWED_HOSTS.append(render_external_hostname)
 
 
 # Application definition
