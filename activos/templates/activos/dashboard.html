@@ -1,0 +1,318 @@
+{% extends 'activos/base.html' %}
+
+{% block titulo %}Dashboard de Activos Técnicos{% endblock %}
+
+{% block contenido %}
+<!-- SECCIÓN DE CABECERA Y KPI CARDS -->
+<div class="row mb-5">
+    <div class="col-12 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-1 display-font text-dark-slate" style="font-weight: 800; letter-spacing: -0.5px;">Inventario de Activos Técnicos</h1>
+            <p class="text-muted mb-0">Gestión de inventario físico, valorización en tiempo real y exportación de esquemas XML.</p>
+        </div>
+        <!-- Botón para abrir el Modal de Creación -->
+        <button type="button" class="btn btn-custom-primary d-flex align-items-center gap-2 shadow" data-bs-toggle="modal" data-bs-target="#modalCrear">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span>Registrar Activo</span>
+        </button>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS (KPIs) -->
+    <!-- Tarjeta 1: Inversión Total -->
+    <div class="col-md-4 mb-3">
+        <div class="card kpi-card kpi-card-primary h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Valor Total Inventario</span>
+                    <h2 class="fw-extrabold display-font text-dark-slate mt-2 mb-0" style="font-size: 2rem;">${{ total_inversion|floatformat:2 }}</h2>
+                </div>
+                <div class="bg-primary bg-opacity-10 p-3 rounded-3 text-primary">
+                    <i class="bi bi-currency-dollar fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta 2: Cantidad Total de Unidades -->
+    <div class="col-md-4 mb-3">
+        <div class="card kpi-card kpi-card-success h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Equipos en Stock</span>
+                    <h2 class="fw-extrabold display-font text-dark-slate mt-2 mb-0" style="font-size: 2rem;">{{ cantidad_total }} <span class="fs-6 fw-normal text-muted">unidades</span></h2>
+                </div>
+                <div class="bg-success bg-opacity-10 p-3 rounded-3 text-success">
+                    <i class="bi bi-boxes fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta 3: Tipos de Equipos -->
+    <div class="col-md-4 mb-3">
+        <div class="card kpi-card kpi-card-info h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Categorías / Equipos</span>
+                    <h2 class="fw-extrabold display-font text-dark-slate mt-2 mb-0" style="font-size: 2rem;">{{ total_equipos_distintos }} <span class="fs-6 fw-normal text-muted">ítems</span></h2>
+                </div>
+                <div class="bg-info bg-opacity-10 p-3 rounded-3 text-info">
+                    <i class="bi bi-pc-display fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CUERPO PRINCIPAL DEL DASHBOARD -->
+<div class="row">
+    <!-- Columna de la Tabla CRUD -->
+    <div class="{% if xml_reporte %}col-lg-7{% else %}col-lg-12{% endif %} mb-4" id="tablaContainer" style="transition: all 0.3s ease;">
+        <div class="card card-main border-0">
+            <div class="card-header bg-white border-0 py-4 px-4 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                <h5 class="mb-0 display-font text-dark-slate" style="font-weight: 700;">Listado de Activos Técnicos</h5>
+                <div class="btn-group shadow-sm">
+                    <!-- Botón para generar el XML e incrustarlo en la página -->
+                    <a href="?ver_xml=1" class="btn btn-outline-primary btn-sm px-3">
+                        <i class="bi bi-code-slash me-1"></i>Generar XML
+                    </a>
+                    <!-- Botón para descargar directamente el XML como archivo -->
+                    <a href="{% url 'descargar_xml' %}" class="btn btn-outline-success btn-sm px-3">
+                        <i class="bi bi-download me-1"></i>Descargar XML
+                    </a>
+                    <!-- Botón para ver el XML crudo en una nueva pestaña -->
+                    <a href="{% url 'ver_xml_crudo' %}" target="_blank" class="btn btn-outline-secondary btn-sm px-3">
+                        <i class="bi bi-eye me-1"></i>Ver Raw XML
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">ID</th>
+                                <th>Nombre del Equipo</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Costo Unitario</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-center pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activo in activos %}
+                            <tr>
+                                <td class="fw-bold text-muted ps-4">#{{ activo.id }}</td>
+                                <td>
+                                    <div class="fw-semibold text-dark-slate">{{ activo.nombre }}</div>
+                                </td>
+                                <td class="text-end fw-medium">{{ activo.cantidad }}</td>
+                                <td class="text-end text-muted">${{ activo.valor_unitario|floatformat:2 }}</td>
+                                <td class="text-end fw-bold text-primary">${{ activo.subtotal|floatformat:2 }}</td>
+                                <td class="text-center pe-4">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <!-- Botón Editar con atributos data-* cargados -->
+                                        <button type="button" class="btn btn-sm btn-edit-activo btn-outline-warning d-flex align-items-center justify-content-center"
+                                                data-id="{{ activo.id }}"
+                                                data-nombre="{{ activo.nombre }}"
+                                                data-cantidad="{{ activo.cantidad }}"
+                                                data-valor="{{ activo.valor_unitario }}"
+                                                style="width: 32px; height: 32px; border-radius: 8px; padding: 0;">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+                                        
+                                        <!-- Botón Eliminar con formulario POST seguro -->
+                                        <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" 
+                                                onclick="confirmarEliminacion('{{ activo.id }}', '{{ activo.nombre|escapejs }}')"
+                                                style="width: 32px; height: 32px; border-radius: 8px; padding: 0;">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Formulario POST oculto para eliminación segura -->
+                                    <form id="form-eliminar-{{ activo.id }}" action="{% url 'eliminar_activo' pk=activo.id %}" method="POST" style="display: none;">
+                                        {% csrf_token %}
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5 pe-4">
+                                    <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary border-secondary border-opacity-10"></i>
+                                    <div class="fs-6 fw-semibold text-dark-slate mb-1">No hay activos registrados</div>
+                                    <div class="small">Haz clic en el botón "Registrar Activo" para iniciar el inventario.</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna del Visor del XML -->
+    {% if xml_reporte %}
+    <div class="col-lg-5 mb-4" id="xmlContainer" style="transition: all 0.3s ease;">
+        <div class="card border-0 xml-viewer-container">
+            <div class="xml-viewer-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark px-2.5 py-1 rounded fs-8 fw-bold">XML</span>
+                    <span>Reporte Técnico Estructurado</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white btn-sm" onclick="cerrarVisorXML()" aria-label="Close"></button>
+            </div>
+            <div class="card-body p-0 bg-dark">
+                <!-- Visor formateado usando Prism.js con scroll vertical e id del bloque -->
+                <pre class="m-0" style="max-height: 480px; overflow-y: auto; background-color: #1e1e2e; font-size: 0.85rem;"><code class="language-xml">{{ xml_reporte }}</code></pre>
+            </div>
+            <div class="card-footer bg-dark border-top border-secondary border-opacity-20 d-flex justify-content-between align-items-center py-3 px-4">
+                <span class="small text-muted">Construido con <code class="text-info bg-dark bg-opacity-50 px-2 py-0.5 rounded">ElementTree</code></span>
+                <a href="{% url 'descargar_xml' %}" class="btn btn-success btn-sm px-3 d-flex align-items-center gap-1.5 shadow">
+                    <i class="bi bi-download"></i>
+                    <span>Descargar Archivo</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: REGISTRAR NUEVO ACTIVO (CREAR) -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalCrear" tabindex="-1" aria-labelledby="modalCrearLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header modal-header-custom">
+                <h5 class="modal-title fw-bold" id="modalCrearLabel">
+                    <i class="bi bi-plus-circle-fill me-2 text-info"></i>Registrar Activo Técnico
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'crear_activo' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Campo Nombre -->
+                    <div class="mb-4">
+                        <label for="crear_nombre" class="form-label fw-semibold text-dark-slate small">Nombre del Equipo</label>
+                        <input type="text" class="form-control form-control-lg shadow-sm" id="crear_nombre" name="nombre" 
+                               placeholder="Ej. Servidor NAS, Switch Cisco..." required maxlength="150">
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Campo Cantidad -->
+                        <div class="col-md-6 mb-4">
+                            <label for="crear_cantidad" class="form-label fw-semibold text-dark-slate small">Cantidad</label>
+                            <input type="number" class="form-control form-control-lg shadow-sm" id="crear_cantidad" name="cantidad" 
+                                   min="1" placeholder="Ej. 5" required>
+                        </div>
+                        
+                        <!-- Campo Valor Unitario -->
+                        <div class="col-md-6 mb-4">
+                            <label for="crear_valor" class="form-label fw-semibold text-dark-slate small">Valor Unitario ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 12px 0 0 12px; border: 1.5px solid #e2e8f0;">$</span>
+                                <input type="number" step="0.01" class="form-control form-control-lg shadow-sm" id="crear_valor" name="valor_unitario" 
+                                       min="0.01" placeholder="Ej. 1200.00" style="border-radius: 0 12px 12px 0; border-left: none;" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <button type="button" class="btn btn-link text-secondary text-decoration-none px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-custom-primary px-4 shadow">Guardar Activo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: EDITAR ACTIVO EXISTENTE (EDITAR) -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header modal-header-custom" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%);">
+                <h5 class="modal-title fw-bold" id="modalEditarLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Modificar Activo Técnico
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarActivo" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Campo Nombre -->
+                    <div class="mb-4">
+                        <label for="editar_nombre" class="form-label fw-semibold text-dark-slate small">Nombre del Equipo</label>
+                        <input type="text" class="form-control form-control-lg shadow-sm" id="editar_nombre" name="nombre" required maxlength="150">
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Campo Cantidad -->
+                        <div class="col-md-6 mb-4">
+                            <label for="editar_cantidad" class="form-label fw-semibold text-dark-slate small">Cantidad</label>
+                            <input type="number" class="form-control form-control-lg shadow-sm" id="editar_cantidad" name="cantidad" min="1" required>
+                        </div>
+                        
+                        <!-- Campo Valor Unitario -->
+                        <div class="col-md-6 mb-4">
+                            <label for="editar_valor" class="form-label fw-semibold text-dark-slate small">Valor Unitario ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 12px 0 0 12px; border: 1.5px solid #e2e8f0;">$</span>
+                                <input type="number" step="0.01" class="form-control form-control-lg shadow-sm" id="editar_valor" name="valor_unitario" min="0.01" style="border-radius: 0 12px 12px 0; border-left: none;" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <button type="button" class="btn btn-link text-secondary text-decoration-none px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning px-4 text-white shadow" style="background-color: #d97706; border: none;">Actualizar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const botonesEditar = document.querySelectorAll(".btn-edit-activo");
+        const modalEditarEl = new bootstrap.Modal(document.getElementById('modalEditar'));
+        const formEditar = document.getElementById("formEditarActivo");
+
+        const inputNombre = document.getElementById("editar_nombre");
+        const inputCantidad = document.getElementById("editar_cantidad");
+        const inputValor = document.getElementById("editar_valor");
+
+        botonesEditar.forEach(boton => {
+            boton.addEventListener("click", function() {
+                const id = this.getAttribute("data-id");
+                const nombre = this.getAttribute("data-nombre");
+                const cantidad = this.getAttribute("data-cantidad");
+                const valor = this.getAttribute("data-valor");
+
+                inputNombre.value = nombre;
+                inputCantidad.value = cantidad;
+                // Reemplazamos posibles comas por puntos decimales para el input HTML
+                inputValor.value = valor.replace(',', '.');
+
+                formEditar.setAttribute("action", `/editar/${id}/`);
+                modalEditarEl.show();
+            });
+        });
+    });
+
+    function confirmarEliminacion(id, nombre) {
+        if (confirm(`¿Está seguro de que desea eliminar el activo "${nombre}" del inventario? Esta acción es irreversible.`)) {
+            document.getElementById(`form-eliminar-${id}`).submit();
+        }
+    }
+
+    function cerrarVisorXML() {
+        window.location.href = window.location.pathname;
+    }
+</script>
+{% endblock %}
