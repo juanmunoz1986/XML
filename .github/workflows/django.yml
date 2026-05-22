@@ -26,7 +26,7 @@ jobs:
     # Paso C: Instalar las dependencias de Django
     - name: Instalar Dependencias
       run: |
-        python -m pip upgrade pip
+        python -m pip install --upgrade pip
         pip install django
 
     # Paso D: Aplicar las migraciones de la base de datos en el servidor
@@ -37,5 +37,5 @@ jobs:
     # Paso E: Ejecutar las pruebas de integración autónomas
     - name: Correr Pruebas de Integracion
       run: |
-        # Ejecutamos el script de pruebas en linux
-        python activos/tests.py  # O nuestro script de integración
+        # Ejecutamos las pruebas usando el test runner de Django
+        python manage.py test
