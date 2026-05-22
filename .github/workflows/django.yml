@@ -27,7 +27,7 @@ jobs:
     - name: Instalar Dependencias
       run: |
         python -m pip install --upgrade pip
-        pip install django
+        pip install -r requirements.txt
 
     # Paso D: Aplicar las migraciones de la base de datos en el servidor
     - name: Preparar Base de Datos
