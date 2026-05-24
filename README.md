@@ -143,7 +143,3 @@ Abre tu navegador de preferencia e ingresa a: **[http://127.0.0.1:8000/](http://
 
 ---
 
-## 🎓 Material de Sustentación para Evaluaciones
-
-En caso de que el docente realice preguntas técnicas durante la defensa del proyecto, consulta la guía didáctica creada en la raíz de tu proyecto:
-👉 **[walkthrough.md](file:///C:/Users/juano/.gemini/antigravity/brain/2b6601e1-89cb-43c3-be23-02e2e5cbced9/walkthrough.md)** (contiene preguntas frecuentes, diagramas y justificación del uso de librerías).
